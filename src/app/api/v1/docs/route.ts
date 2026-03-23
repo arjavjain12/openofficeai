@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { saveDocument } from '@/lib/db'
 import { transformDocInput, type DocApiInput } from '@/lib/transform'
 import { authenticateApiKey, getCurrentUser } from '@/lib/auth'
+import { incrementApiCalls, incrementDocsCreated } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,24 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       const user = await getCurrentUser()
       userId = user?.id || null
+    }
+
+    if (userId) {
+      const apiAllowed = await incrementApiCalls(userId)
+      if (!apiAllowed) {
+        return NextResponse.json(
+          { error: 'API call limit reached. Upgrade your plan at /pricing' },
+          { status: 429 }
+        )
+      }
+
+      const docAllowed = await incrementDocsCreated(userId)
+      if (!docAllowed) {
+        return NextResponse.json(
+          { error: 'Document limit reached. Upgrade your plan at /pricing' },
+          { status: 429 }
+        )
+      }
     }
 
     const body = (await req.json()) as DocApiInput

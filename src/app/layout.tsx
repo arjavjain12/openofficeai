@@ -4,7 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'OpenSheet — API-First Spreadsheets & Docs',
+  title: 'OpenOfficeAI — API-First Spreadsheets & Docs',
   description: 'Create and share spreadsheets and documents via API. No signup required.',
 }
 

@@ -7,7 +7,14 @@ import { logoutAction, createApiKeyAction, deleteApiKeyAction, deleteDocAction, 
 
 interface Doc { id: string; type: 'sheet' | 'doc'; title: string; createdAt: string; updatedAt: string }
 interface ApiKey { id: string; name: string; keyPreview: string; createdAt: string; lastUsedAt: string | null }
-interface Props { user: { id: string; name: string; email: string }; docs: Doc[]; apiKeys: ApiKey[] }
+interface Props {
+  user: { id: string; name: string; email: string }
+  docs: Doc[]
+  apiKeys: ApiKey[]
+  usage: { apiCalls: number; docsCreated: number }
+  limits: { apiCalls: number; docs: number }
+  plan: string
+}
 
 function timeAgo(d: string) {
   const diff = Date.now() - new Date(d).getTime()
@@ -21,7 +28,7 @@ function timeAgo(d: string) {
   return new Date(d).toLocaleDateString()
 }
 
-export default function DashboardClient({ user, docs, apiKeys }: Props) {
+export default function DashboardClient({ user, docs, apiKeys, usage, limits, plan }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -104,7 +111,7 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
                   <rect x="9" y="9" width="6" height="6" rx="1.5" fill="white" opacity="0.2" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold tracking-tight">OpenSheet</span>
+              <span className="text-sm font-semibold tracking-tight">OpenOfficeAI</span>
             </a>
             <span className="text-zinc-300">/</span>
             <span className="text-sm text-zinc-500">{user.name}</span>
@@ -367,7 +374,7 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-semibold">Current Plan</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Free tier</p>
+                    <p className="text-xs text-zinc-400 mt-0.5 capitalize">{plan} tier</p>
                   </div>
                   <a href="/pricing" className="text-xs px-3 py-1.5 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 transition-all active:scale-[0.98]">
                     Upgrade
@@ -378,31 +385,35 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
                     <div className="text-xs text-zinc-400 mb-1">Documents</div>
                     <div className="flex items-end gap-1">
                       <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{docs.length}</span>
-                      <span className="text-sm text-zinc-400 mb-0.5">/ 25</span>
+                      <span className="text-sm text-zinc-400 mb-0.5">/ {limits.docs === Infinity ? 'Unlimited' : limits.docs}</span>
+                    </div>
+                    {limits.docs !== Infinity && (
+                      <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${docs.length / limits.docs > 0.8 ? 'bg-red-500' : 'bg-zinc-900'}`} style={{ width: `${Math.min((docs.length / limits.docs) * 100, 100)}%` }} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 rounded-xl bg-zinc-50">
+                    <div className="text-xs text-zinc-400 mb-1">API Calls (this month)</div>
+                    <div className="flex items-end gap-1">
+                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{usage.apiCalls}</span>
+                      <span className="text-sm text-zinc-400 mb-0.5">/ {limits.apiCalls.toLocaleString()}</span>
                     </div>
                     <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-zinc-900 rounded-full transition-all" style={{ width: `${Math.min((docs.length / 25) * 100, 100)}%` }} />
+                      <div className={`h-full rounded-full transition-all ${usage.apiCalls / limits.apiCalls > 0.8 ? 'bg-red-500' : 'bg-zinc-900'}`} style={{ width: `${Math.min((usage.apiCalls / limits.apiCalls) * 100, 100)}%` }} />
                     </div>
                   </div>
                   <div className="p-4 rounded-xl bg-zinc-50">
-                    <div className="text-xs text-zinc-400 mb-1">API Calls</div>
+                    <div className="text-xs text-zinc-400 mb-1">Docs Created (this month)</div>
                     <div className="flex items-end gap-1">
-                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>0</span>
-                      <span className="text-sm text-zinc-400 mb-0.5">/ 500</span>
+                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{usage.docsCreated}</span>
+                      <span className="text-sm text-zinc-400 mb-0.5">/ {limits.docs === Infinity ? 'Unlimited' : limits.docs}</span>
                     </div>
-                    <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-zinc-900 rounded-full" style={{ width: '0%' }} />
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-xl bg-zinc-50">
-                    <div className="text-xs text-zinc-400 mb-1">Storage</div>
-                    <div className="flex items-end gap-1">
-                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>0</span>
-                      <span className="text-sm text-zinc-400 mb-0.5">MB / 50 MB</span>
-                    </div>
-                    <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-zinc-900 rounded-full" style={{ width: '0%' }} />
-                    </div>
+                    {limits.docs !== Infinity && (
+                      <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${usage.docsCreated / limits.docs > 0.8 ? 'bg-red-500' : 'bg-zinc-900'}`} style={{ width: `${Math.min((usage.docsCreated / limits.docs) * 100, 100)}%` }} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

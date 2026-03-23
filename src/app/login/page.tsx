@@ -47,7 +47,7 @@ function LoginContent() {
               <rect x="9" y="9" width="6" height="6" rx="1.5" fill="white" opacity="0.2" />
             </svg>
           </div>
-          <span className="text-[15px] font-semibold tracking-tight">OpenSheet</span>
+          <span className="text-[15px] font-semibold tracking-tight">OpenOfficeAI</span>
         </a>
 
         <h1 className="text-xl font-semibold tracking-tight mb-1">Welcome back</h1>

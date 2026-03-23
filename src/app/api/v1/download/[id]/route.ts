@@ -107,7 +107,7 @@ async function sheetToXLSX(data: unknown, title: string): Promise<Buffer> {
   const sheetOrder = d?.sheetOrder || Object.keys(sheets)
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'OpenSheet'
+  workbook.creator = 'OpenOfficeAI'
   workbook.created = new Date()
 
   for (const sheetId of sheetOrder) {

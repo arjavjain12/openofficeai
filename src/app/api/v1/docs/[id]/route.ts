@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDocument, updateDocumentData, deleteDocument } from '@/lib/db'
 import { authenticateApiKey, getCurrentUser } from '@/lib/auth'
+import { incrementApiCalls } from '@/lib/rate-limit'
 
 async function getAuthUserId(req: NextRequest): Promise<string | null> {
   const apiUserId = await authenticateApiKey(req)
@@ -35,6 +36,10 @@ export async function PUT(
   const userId = await getAuthUserId(req)
   if (!userId) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  const allowed = await incrementApiCalls(userId)
+  if (!allowed) {
+    return NextResponse.json({ error: 'API call limit reached. Upgrade your plan at /pricing' }, { status: 429 })
   }
   const { id } = await params
   const body = await req.json()

@@ -85,7 +85,7 @@ export default function SheetEditor({ id, initialData, canEdit }: SheetEditorPro
     <div className="h-screen w-screen flex flex-col">
       <header className="h-12 border-b border-zinc-200 flex items-center px-4 justify-between bg-white shrink-0">
         <div className="flex items-center gap-3">
-          <a href="/" className="font-semibold text-sm text-zinc-900">OpenSheet</a>
+          <a href="/" className="font-semibold text-sm text-zinc-900">OpenOfficeAI</a>
           <span className="text-xs text-zinc-400">/ Spreadsheet</span>
           {!canEdit && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 font-medium">View only</span>

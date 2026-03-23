@@ -29,7 +29,7 @@ export default function Home() {
           className="text-3xl tracking-tight text-white"
           style={{ fontFamily: "'Instrument Serif', serif" }}
         >
-          OpenSheet<sup className="text-xs">&#174;</sup>
+          OpenOfficeAI<sup className="text-xs">&#174;</sup>
         </div>
 
         <div className="hidden md:flex items-center gap-8">

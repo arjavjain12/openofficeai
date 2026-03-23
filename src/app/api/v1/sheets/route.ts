@@ -3,14 +3,33 @@ import { nanoid } from 'nanoid'
 import { saveDocument } from '@/lib/db'
 import { transformSheetInput, type SheetApiInput } from '@/lib/transform'
 import { authenticateApiKey, getCurrentUser } from '@/lib/auth'
+import { incrementApiCalls, incrementDocsCreated } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
-    // Try API key auth first, then session auth
     let userId: string | null = await authenticateApiKey(req)
     if (!userId) {
       const user = await getCurrentUser()
       userId = user?.id || null
+    }
+
+    // Rate limit check (only for authenticated users)
+    if (userId) {
+      const apiAllowed = await incrementApiCalls(userId)
+      if (!apiAllowed) {
+        return NextResponse.json(
+          { error: 'API call limit reached. Upgrade your plan at /pricing' },
+          { status: 429 }
+        )
+      }
+
+      const docAllowed = await incrementDocsCreated(userId)
+      if (!docAllowed) {
+        return NextResponse.json(
+          { error: 'Document limit reached. Upgrade your plan at /pricing' },
+          { status: 429 }
+        )
+      }
     }
 
     const body = (await req.json()) as SheetApiInput
