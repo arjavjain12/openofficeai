@@ -35,13 +35,14 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  const [tab, setTab] = useState<'files' | 'keys'>('files')
+  const [tab, setTab] = useState<'files' | 'keys' | 'usage'>('files')
   const [newKey, setNewKey] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [dlOpen, setDlOpen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   async function handleCreateKey(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -108,9 +109,51 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
             <span className="text-zinc-300">/</span>
             <span className="text-sm text-zinc-500">{user.name}</span>
           </div>
-          <form action={logoutAction}>
-            <button className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors">Log out</button>
-          </form>
+          <div className="relative">
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-2 hover:bg-zinc-50 rounded-[10px] px-2 py-1.5 transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-zinc-900 flex items-center justify-center text-[11px] text-white font-medium">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm text-zinc-600 hidden sm:block">{user.name}</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-zinc-400"><path d="M3 4.5L6 7.5L9 4.5" /></svg>
+            </button>
+            {profileOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg py-1 z-20">
+                  <div className="px-3 py-2 border-b border-zinc-100">
+                    <p className="text-sm font-medium text-zinc-900 truncate">{user.name}</p>
+                    <p className="text-xs text-zinc-400 truncate">{user.email}</p>
+                  </div>
+                  <button onClick={() => { setTab('keys'); setProfileOpen(false) }}
+                    className="w-full text-left px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M10 2L8.5 3.5 11 6l1.5-1.5L10 2ZM5 7L1 11v3h3l4-4" /><path d="M8.5 5.5l2 2" /></svg>
+                    API Keys
+                  </button>
+                  <button onClick={() => { setTab('usage'); setProfileOpen(false) }}
+                    className="w-full text-left px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1" y="5" width="3" height="10" rx="1" /><rect x="6.5" y="1" width="3" height="14" rx="1" /><rect x="12" y="8" width="3" height="7" rx="1" /></svg>
+                    Usage & Billing
+                  </button>
+                  <a href="/pricing" className="block px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="7" /><path d="M8 4v8M5.5 6.5C5.5 5.67 6.62 5 8 5s2.5.67 2.5 1.5S9.38 8 8 8s-2.5.67-2.5 1.5S6.62 11 8 11s2.5-.67 2.5-1.5" /></svg>
+                    Pricing
+                  </a>
+                  <div className="border-t border-zinc-100 mt-1 pt-1">
+                    <form action={logoutAction}>
+                      <button className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 14H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3M11 11l3-3-3-3M6 8h8" /></svg>
+                        Sign out
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -135,10 +178,10 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-zinc-100">
-          {(['files', 'keys'] as const).map(t => (
+          {(['files', 'keys', 'usage'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${tab === t ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'}`}>
-              {t === 'files' ? `Files (${docs.length})` : `API Keys (${apiKeys.length})`}
+              {t === 'files' ? `Files (${docs.length})` : t === 'keys' ? `API Keys (${apiKeys.length})` : 'Usage & Billing'}
               {tab === t && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-900 rounded-full" />}
             </button>
           ))}
@@ -313,6 +356,80 @@ export default function DashboardClient({ user, docs, apiKeys }: Props) {
   -H <span className="text-amber-300">&quot;Content-Type: application/json&quot;</span> \{'\n'}
   -d <span className="text-zinc-500">&apos;{'{'}&quot;title&quot;:&quot;Report&quot;, &quot;sheets&quot;:[{'{'}&quot;rows&quot;:[[&quot;A&quot;,1],[&quot;B&quot;,2]]{'}'}]{'}'}&apos;</span>
                 </pre>
+              </div>
+            </motion.div>
+          )}
+
+          {tab === 'usage' && (
+            <motion.div key="u" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="space-y-6">
+              {/* Current plan */}
+              <div className="p-6 border border-zinc-200 rounded-2xl bg-white">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-semibold">Current Plan</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Free tier</p>
+                  </div>
+                  <a href="/pricing" className="text-xs px-3 py-1.5 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 transition-all active:scale-[0.98]">
+                    Upgrade
+                  </a>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl bg-zinc-50">
+                    <div className="text-xs text-zinc-400 mb-1">Documents</div>
+                    <div className="flex items-end gap-1">
+                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{docs.length}</span>
+                      <span className="text-sm text-zinc-400 mb-0.5">/ 25</span>
+                    </div>
+                    <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-zinc-900 rounded-full transition-all" style={{ width: `${Math.min((docs.length / 25) * 100, 100)}%` }} />
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-zinc-50">
+                    <div className="text-xs text-zinc-400 mb-1">API Calls</div>
+                    <div className="flex items-end gap-1">
+                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>0</span>
+                      <span className="text-sm text-zinc-400 mb-0.5">/ 500</span>
+                    </div>
+                    <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-zinc-900 rounded-full" style={{ width: '0%' }} />
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-zinc-50">
+                    <div className="text-xs text-zinc-400 mb-1">Storage</div>
+                    <div className="flex items-end gap-1">
+                      <span className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>0</span>
+                      <span className="text-sm text-zinc-400 mb-0.5">MB / 50 MB</span>
+                    </div>
+                    <div className="mt-2 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-zinc-900 rounded-full" style={{ width: '0%' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Usage breakdown */}
+              <div className="p-6 border border-zinc-200 rounded-2xl bg-white">
+                <h3 className="text-sm font-semibold mb-4">What happens when you exceed limits?</h3>
+                <div className="space-y-3 text-sm text-zinc-500">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round"><polyline points="2 5 4 7 8 3" /></svg>
+                    </div>
+                    <p>Your existing documents remain accessible. Nothing gets deleted.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round"><path d="M5 3v3M5 7.5v.01" /></svg>
+                    </div>
+                    <p>New document creation and API calls are paused until you upgrade or the next billing cycle.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round"><circle cx="5" cy="5" r="4" /><path d="M5 3v2l1.5 1.5" /></svg>
+                    </div>
+                    <p>Usage resets on the 1st of each month. Overage charges apply only on paid plans ($0.02 per extra API call).</p>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
