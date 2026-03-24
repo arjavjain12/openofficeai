@@ -145,6 +145,10 @@ export default function DashboardClient({ user, docs, apiKeys, usage, limits, pl
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1" y="5" width="3" height="10" rx="1" /><rect x="6.5" y="1" width="3" height="14" rx="1" /><rect x="12" y="8" width="3" height="7" rx="1" /></svg>
                     Usage & Billing
                   </button>
+                  <a href="/docs" className="block px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z" /><path d="M6 5h5M6 8h5M6 11h3" /></svg>
+                    API Docs
+                  </a>
                   <a href="/pricing" className="block px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="7" /><path d="M8 4v8M5.5 6.5C5.5 5.67 6.62 5 8 5s2.5.67 2.5 1.5S9.38 8 8 8s-2.5.67-2.5 1.5S6.62 11 8 11s2.5-.67 2.5-1.5" /></svg>
                     Pricing
