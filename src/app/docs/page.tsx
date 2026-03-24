@@ -2,246 +2,67 @@
 
 import { useState } from 'react'
 
-const sections = [
-  {
-    id: 'auth',
-    title: 'Authentication',
-    content: `All API requests require a Bearer token. Generate an API key from your Dashboard → API Keys tab.
-
-Include it in every request:`,
-    code: `curl -H "Authorization: Bearer YOUR_API_KEY" \\
-  https://opensheet-seven.vercel.app/api/v1/sheets`,
-  },
-  {
-    id: 'create-sheet',
-    title: 'Create a Spreadsheet',
-    method: 'POST',
-    endpoint: '/api/v1/sheets',
-    desc: 'Creates a new spreadsheet and returns a shareable link.',
-    request: `{
-  "title": "Q1 Sales Report",
-  "sheets": [
-    {
-      "name": "Revenue",
-      "rows": [
-        ["Product", "Revenue", "Units"],
-        ["Widget A", 50000, 1200],
-        ["Widget B", 32000, 800]
-      ]
-    }
-  ]
-}`,
-    requestFields: [
-      { name: 'title', type: 'string', required: false, desc: 'Document title. Defaults to "Untitled Spreadsheet".' },
-      { name: 'sheets', type: 'array', required: false, desc: 'Array of sheet objects.' },
-      { name: 'sheets[].name', type: 'string', required: false, desc: 'Sheet tab name. Defaults to "Sheet1".' },
-      { name: 'sheets[].rows', type: 'array', required: false, desc: '2D array of cell values (strings, numbers, booleans).' },
-      { name: 'sheets[].cells', type: 'object', required: false, desc: 'Cell-by-cell data keyed by reference (e.g. "A1"). Supports value, formula, bold, italic, fontSize, fontColor, bgColor.' },
-    ],
-    response: `{
-  "id": "x7k2m9p3",
-  "type": "sheet",
-  "title": "Q1 Sales Report",
-  "url": "https://opensheet-seven.vercel.app/s/x7k2m9p3",
-  "edit_token": "tok_NEwHxo...",
-  "created_at": "2026-03-23T10:00:00.000Z"
-}`,
-    curl: `curl -X POST https://opensheet-seven.vercel.app/api/v1/sheets \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "title": "Q1 Sales Report",
-    "sheets": [{
-      "rows": [
-        ["Product", "Revenue"],
-        ["Widget A", 50000]
-      ]
-    }]
-  }'`,
-  },
-  {
-    id: 'create-sheet-advanced',
-    title: 'Create with Formatting & Formulas',
-    method: 'POST',
-    endpoint: '/api/v1/sheets',
-    desc: 'Use the cells object for per-cell control over values, formulas, and styling.',
-    request: `{
-  "title": "Formatted Report",
-  "sheets": [{
-    "name": "Summary",
-    "cells": {
-      "A1": { "value": "Product", "bold": true, "bgColor": "#f0f0f0" },
-      "B1": { "value": "Revenue", "bold": true, "bgColor": "#f0f0f0" },
-      "A2": { "value": "Widget A" },
-      "B2": { "value": 50000 },
-      "A3": { "value": "Widget B" },
-      "B3": { "value": 32000 },
-      "A4": { "value": "Total", "bold": true },
-      "B4": { "formula": "=SUM(B2:B3)", "bold": true }
-    }
-  }]
-}`,
-    requestFields: [
-      { name: 'cells[ref].value', type: 'string | number', required: false, desc: 'Cell value.' },
-      { name: 'cells[ref].formula', type: 'string', required: false, desc: 'Excel formula (e.g. "=SUM(A1:A10)").' },
-      { name: 'cells[ref].bold', type: 'boolean', required: false, desc: 'Bold text.' },
-      { name: 'cells[ref].italic', type: 'boolean', required: false, desc: 'Italic text.' },
-      { name: 'cells[ref].fontSize', type: 'number', required: false, desc: 'Font size in points.' },
-      { name: 'cells[ref].fontColor', type: 'string', required: false, desc: 'Hex color (e.g. "#ff0000").' },
-      { name: 'cells[ref].bgColor', type: 'string', required: false, desc: 'Background hex color.' },
-    ],
-  },
-  {
-    id: 'create-doc',
-    title: 'Create a Document',
-    method: 'POST',
-    endpoint: '/api/v1/docs',
-    desc: 'Creates a new rich text document and returns a shareable link.',
-    request: `{
-  "title": "Meeting Notes",
-  "content": [
-    { "type": "heading", "level": 1, "text": "Weekly Standup" },
-    { "type": "paragraph", "text": "Discussed the Q1 roadmap and upcoming deadlines." },
-    { "type": "heading", "level": 2, "text": "Action Items" },
-    { "type": "paragraph", "text": "Ship the API docs by Friday." },
-    { "type": "paragraph", "text": "Review the pricing model with the team." }
-  ]
-}`,
-    requestFields: [
-      { name: 'title', type: 'string', required: false, desc: 'Document title.' },
-      { name: 'content', type: 'array', required: false, desc: 'Array of content blocks.' },
-      { name: 'content[].type', type: 'string', required: true, desc: '"heading" or "paragraph".' },
-      { name: 'content[].text', type: 'string', required: true, desc: 'The text content.' },
-      { name: 'content[].level', type: 'number', required: false, desc: 'Heading level (1-5). Only for type "heading".' },
-      { name: 'content[].bold', type: 'boolean', required: false, desc: 'Bold the entire block.' },
-      { name: 'content[].italic', type: 'boolean', required: false, desc: 'Italicize the entire block.' },
-      { name: 'content[].color', type: 'string', required: false, desc: 'Text color (hex).' },
-    ],
-    response: `{
-  "id": "p3n8q2w1",
-  "type": "doc",
-  "title": "Meeting Notes",
-  "url": "https://opensheet-seven.vercel.app/d/p3n8q2w1",
-  "edit_token": "tok_abc123...",
-  "created_at": "2026-03-23T10:00:00.000Z"
-}`,
-    curl: `curl -X POST https://opensheet-seven.vercel.app/api/v1/docs \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "title": "Meeting Notes",
-    "content": [
-      { "type": "heading", "level": 1, "text": "Weekly Standup" },
-      { "type": "paragraph", "text": "Discussed the roadmap." }
-    ]
-  }'`,
-  },
-  {
-    id: 'get',
-    title: 'Get a Document',
-    method: 'GET',
-    endpoint: '/api/v1/sheets/:id  or  /api/v1/docs/:id',
-    desc: 'Retrieve a document by ID. Returns the full Univer snapshot data. No authentication required.',
-    response: `{
-  "id": "x7k2m9p3",
-  "type": "sheet",
-  "title": "Q1 Sales Report",
-  "data": { ... },
-  "created_at": "2026-03-23T10:00:00.000Z",
-  "updated_at": "2026-03-23T12:30:00.000Z"
-}`,
-    curl: `curl https://opensheet-seven.vercel.app/api/v1/sheets/x7k2m9p3`,
-  },
-  {
-    id: 'update',
-    title: 'Update a Document',
-    method: 'PUT',
-    endpoint: '/api/v1/sheets/:id  or  /api/v1/docs/:id',
-    desc: 'Update the data of an existing document. Requires authentication.',
-    request: `{
-  "data": { ... }
-}`,
-    curl: `curl -X PUT https://opensheet-seven.vercel.app/api/v1/sheets/x7k2m9p3 \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "data": { ... } }'`,
-  },
-  {
-    id: 'delete',
-    title: 'Delete a Document',
-    method: 'DELETE',
-    endpoint: '/api/v1/sheets/:id  or  /api/v1/docs/:id',
-    desc: 'Permanently delete a document. Requires authentication.',
-    curl: `curl -X DELETE https://opensheet-seven.vercel.app/api/v1/sheets/x7k2m9p3 \\
-  -H "Authorization: Bearer YOUR_API_KEY"`,
-  },
-  {
-    id: 'download',
-    title: 'Download / Export',
-    method: 'GET',
-    endpoint: '/api/v1/download/:id?format=FORMAT',
-    desc: 'Export a document in various formats. No authentication required.',
-    requestFields: [
-      { name: 'format (sheets)', type: 'string', required: true, desc: '"xlsx", "csv", "html", or "json".' },
-      { name: 'format (docs)', type: 'string', required: true, desc: '"pdf", "docx", "txt", or "json".' },
-    ],
-    curl: `# Download as Excel
-curl -O https://opensheet-seven.vercel.app/api/v1/download/x7k2m9p3?format=xlsx
-
-# Download as PDF
-curl -O https://opensheet-seven.vercel.app/api/v1/download/p3n8q2w1?format=pdf`,
-  },
-  {
-    id: 'rate-limits',
-    title: 'Rate Limits',
-    content: `API calls are tracked per user per month. GET requests are free and unlimited.
-
-| Plan | API Calls/month | Documents |
-|------|----------------|-----------|
-| Free | 500 | 25 |
-| Pro ($12/mo) | 25,000 | Unlimited |
-| Scale ($49/mo) | 200,000 | Unlimited |
-
-When you exceed your limit, the API returns 429 Too Many Requests. Usage resets on the 1st of each month.`,
-  },
-  {
-    id: 'errors',
-    title: 'Error Responses',
-    content: `All errors return JSON with an "error" field:`,
-    request: `// 400 Bad Request
-{ "error": "Invalid request", "details": "..." }
-
-// 401 Unauthorized
-{ "error": "Authentication required" }
-
-// 404 Not Found
-{ "error": "Not found" }
-
-// 429 Too Many Requests
-{ "error": "API call limit reached. Upgrade your plan at /pricing" }`,
-  },
-]
-
-function MethodBadge({ method }: { method: string }) {
-  const colors: Record<string, string> = {
-    GET: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    POST: 'bg-blue-50 text-blue-700 border-blue-200',
-    PUT: 'bg-amber-50 text-amber-700 border-amber-200',
-    DELETE: 'bg-red-50 text-red-700 border-red-200',
+function Badge({ text, color }: { text: string; color: string }) {
+  const styles: Record<string, string> = {
+    green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    red: 'bg-red-50 text-red-700 border-red-200',
+    zinc: 'bg-zinc-100 text-zinc-700 border-zinc-200',
   }
   return (
-    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${colors[method] || 'bg-zinc-50 text-zinc-700 border-zinc-200'}`} style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-      {method}
+    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${styles[color]}`} style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
+      {text}
     </span>
   )
 }
 
+function Code({ children }: { children: string }) {
+  return (
+    <pre className="bg-[#18181b] text-zinc-300 rounded-xl p-5 text-[13px] leading-[1.8] overflow-x-auto border border-zinc-800" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
+      {children}
+    </pre>
+  )
+}
+
+function Field({ name, type, required, children }: { name: string; type: string; required?: boolean; children: string }) {
+  return (
+    <div className="flex items-start gap-4 py-3 border-b border-zinc-100 last:border-0">
+      <div className="w-44 shrink-0">
+        <code className="text-[13px] font-medium text-zinc-900" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{name}</code>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="text-[11px] text-zinc-400" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{type}</span>
+          {required && <span className="text-[10px] text-red-500 font-medium">required</span>}
+        </div>
+      </div>
+      <p className="text-sm text-zinc-500 leading-relaxed">{children}</p>
+    </div>
+  )
+}
+
+const navItems = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'quickstart', label: 'Quick Start' },
+  { id: 'auth', label: 'Authentication' },
+  { id: 'create-sheet', label: 'Create Sheet' },
+  { id: 'create-sheet-cells', label: 'Formatting & Formulas' },
+  { id: 'create-doc', label: 'Create Document' },
+  { id: 'get', label: 'Get Document' },
+  { id: 'update', label: 'Update Document' },
+  { id: 'delete', label: 'Delete Document' },
+  { id: 'download', label: 'Download / Export' },
+  { id: 'sharing', label: 'Sharing & Permissions' },
+  { id: 'limits', label: 'Rate Limits' },
+  { id: 'errors', label: 'Errors' },
+]
+
 export default function DocsPage() {
-  const [activeSection, setActiveSection] = useState('auth')
+  const [active, setActive] = useState('overview')
 
   return (
-    <div className="min-h-[100dvh] bg-[#fafafa]">
-      <nav className="sticky top-0 z-20 bg-[#fafafa]/80 backdrop-blur-lg border-b border-zinc-100">
+    <div className="min-h-[100dvh] bg-white">
+      {/* Nav */}
+      <nav className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-zinc-100">
         <div className="max-w-[1200px] mx-auto flex items-center justify-between px-6 h-14">
           <a href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-[8px] bg-zinc-900 flex items-center justify-center">
@@ -253,113 +74,430 @@ export default function DocsPage() {
               </svg>
             </div>
             <span className="text-sm font-semibold tracking-tight">OpenOfficeAI</span>
-            <span className="text-zinc-300 ml-1">/</span>
-            <span className="text-sm text-zinc-500 ml-1">API Docs</span>
+            <span className="text-zinc-300 mx-1">/</span>
+            <span className="text-sm text-zinc-500">API Docs</span>
           </a>
-          <div className="flex items-center gap-2">
-            <a href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-900 px-3 py-2 transition-colors">Dashboard</a>
-            <a href="/pricing" className="text-sm text-zinc-500 hover:text-zinc-900 px-3 py-2 transition-colors">Pricing</a>
+          <div className="flex gap-3">
+            <a href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors">Dashboard</a>
+            <a href="/pricing" className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors">Pricing</a>
           </div>
         </div>
       </nav>
 
       <div className="max-w-[1200px] mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-12">
           {/* Sidebar */}
           <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-0.5">
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-3">Reference</p>
-              {sections.map(s => (
+            <nav className="sticky top-24 space-y-0.5">
+              {navItems.map(item => (
                 <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  onClick={() => setActiveSection(s.id)}
-                  className={`block text-sm py-1.5 px-2 rounded-lg transition-colors ${activeSection === s.id ? 'text-zinc-900 bg-zinc-100 font-medium' : 'text-zinc-500 hover:text-zinc-700'}`}
+                  key={item.id}
+                  href={`#${item.id}`}
+                  onClick={() => setActive(item.id)}
+                  className={`block text-[13px] py-1.5 px-2.5 rounded-lg transition-colors ${active === item.id ? 'text-zinc-900 bg-zinc-100 font-medium' : 'text-zinc-400 hover:text-zinc-700'}`}
                 >
-                  {s.title}
+                  {item.label}
                 </a>
               ))}
-            </div>
+            </nav>
           </aside>
 
-          {/* Content */}
-          <main className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tighter mb-2">API Reference</h1>
-            <p className="text-sm text-zinc-500 mb-10">Everything you need to create spreadsheets and documents programmatically.</p>
+          {/* Main */}
+          <main className="min-w-0 space-y-20">
 
-            <div className="space-y-16">
-              {sections.map(s => (
-                <section key={s.id} id={s.id} className="scroll-mt-24">
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-lg font-semibold tracking-tight">{s.title}</h2>
-                    {'method' in s && s.method && <MethodBadge method={s.method} />}
+            {/* Overview */}
+            <section id="overview" className="scroll-mt-24">
+              <h1 className="text-2xl font-semibold tracking-tighter mb-3">API Reference</h1>
+              <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-6">
+                OpenOfficeAI lets you create spreadsheets and documents with a single API call. You get back a shareable URL that opens a full editor in the browser. No SDK needed — just HTTP.
+              </p>
+              <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-100">
+                <p className="text-xs text-zinc-400 mb-1">Base URL</p>
+                <code className="text-sm text-zinc-900" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>https://opensheet-seven.vercel.app</code>
+              </div>
+            </section>
+
+            {/* Quick Start */}
+            <section id="quickstart" className="scroll-mt-24">
+              <h2 className="text-lg font-semibold tracking-tight mb-4">Quick Start</h2>
+              <p className="text-sm text-zinc-500 mb-4">Create a spreadsheet in 3 steps:</p>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-zinc-900 mb-2">1. Get an API key</p>
+                  <p className="text-sm text-zinc-500 mb-2">Sign up at <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">/signup</code>, then go to Dashboard and generate an API key.</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-zinc-900 mb-2">2. Create a spreadsheet</p>
+                  <Code>{`curl -X POST https://opensheet-seven.vercel.app/api/v1/sheets \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "My First Sheet",
+    "sheets": [{
+      "rows": [
+        ["Name", "Email", "Role"],
+        ["Arjav Jain", "arjav@example.com", "Founder"],
+        ["Vaibhav Jain", "vaibhav@example.com", "Co-founder"]
+      ]
+    }]
+  }'`}</Code>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-zinc-900 mb-2">3. Open the link</p>
+                  <p className="text-sm text-zinc-500">The response includes a <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">url</code> field. Open it in a browser — full spreadsheet editor, instantly shareable.</p>
+                  <Code>{`{
+  "id": "x7k2m9p3",
+  "url": "https://opensheet-seven.vercel.app/s/x7k2m9p3",
+  "type": "sheet",
+  "title": "My First Sheet",
+  "edit_token": "tok_...",
+  "created_at": "2026-03-24T10:00:00.000Z"
+}`}</Code>
+                </div>
+              </div>
+            </section>
+
+            {/* Auth */}
+            <section id="auth" className="scroll-mt-24">
+              <h2 className="text-lg font-semibold tracking-tight mb-4">Authentication</h2>
+              <p className="text-sm text-zinc-500 mb-4">All write operations (POST, PUT, DELETE) require a Bearer token. GET requests are public and free.</p>
+              <Code>{`Authorization: Bearer YOUR_API_KEY`}</Code>
+              <p className="text-sm text-zinc-500 mt-4">Generate API keys from your <a href="/dashboard" className="text-zinc-900 underline">Dashboard</a> under the API Keys tab.</p>
+            </section>
+
+            {/* Create Sheet */}
+            <section id="create-sheet" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Create a Spreadsheet</h2>
+                <Badge text="POST" color="blue" />
+              </div>
+              <div className="mb-4 px-3.5 py-2 bg-zinc-50 border border-zinc-100 rounded-lg">
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/sheets</code>
+              </div>
+              <p className="text-sm text-zinc-500 mb-6">Creates a new spreadsheet with optional pre-filled data. Returns a shareable URL.</p>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Request Body</p>
+              <div className="border border-zinc-100 rounded-xl p-4 mb-6">
+                <Field name="title" type="string">Title shown in the editor tab and dashboard. Defaults to &quot;Untitled Spreadsheet&quot;.</Field>
+                <Field name="sheets" type="array">Array of sheet objects. Each sheet becomes a tab in the spreadsheet.</Field>
+                <Field name="sheets[].name" type="string">Tab name (e.g. &quot;Revenue&quot;, &quot;Q1 Data&quot;). Defaults to &quot;Sheet1&quot;.</Field>
+                <Field name="sheets[].rows" type="array">Simple 2D array. First row is typically headers. Each inner array is one row. Values can be strings, numbers, or booleans.</Field>
+                <Field name="sheets[].cells" type="object">Cell-by-cell data keyed by cell reference (e.g. &quot;A1&quot;, &quot;B2&quot;). Use this instead of rows when you need formatting or formulas. See next section.</Field>
+              </div>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Example — Simple rows</p>
+              <Code>{`curl -X POST https://opensheet-seven.vercel.app/api/v1/sheets \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Sales Report Q1",
+    "sheets": [
+      {
+        "name": "Revenue",
+        "rows": [
+          ["Product", "Revenue", "Units Sold"],
+          ["Widget A", 50000, 1200],
+          ["Widget B", 32000, 800],
+          ["Widget C", 78000, 2100]
+        ]
+      },
+      {
+        "name": "Costs",
+        "rows": [
+          ["Category", "Amount"],
+          ["Marketing", 12000],
+          ["Engineering", 45000]
+        ]
+      }
+    ]
+  }'`}</Code>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3 mt-8">Response</p>
+              <Code>{`{
+  "id": "x7k2m9p3",
+  "type": "sheet",
+  "title": "Sales Report Q1",
+  "url": "https://opensheet-seven.vercel.app/s/x7k2m9p3",
+  "edit_token": "tok_NEwHxoaxrJ1bILIa...",
+  "created_at": "2026-03-24T10:00:00.000Z"
+}`}</Code>
+            </section>
+
+            {/* Create Sheet — Cells */}
+            <section id="create-sheet-cells" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Formatting & Formulas</h2>
+                <Badge text="POST" color="blue" />
+              </div>
+              <p className="text-sm text-zinc-500 mb-6">Use the <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">cells</code> object instead of <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">rows</code> for per-cell control. Keys are cell references like &quot;A1&quot;, &quot;B2&quot;, etc.</p>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Cell Properties</p>
+              <div className="border border-zinc-100 rounded-xl p-4 mb-6">
+                <Field name="value" type="string | number">The cell value.</Field>
+                <Field name="formula" type="string">Excel-style formula. Must start with = (e.g. &quot;=SUM(B2:B10)&quot;, &quot;=A1*1.1&quot;). Supports 400+ functions.</Field>
+                <Field name="bold" type="boolean">Bold the cell text.</Field>
+                <Field name="italic" type="boolean">Italicize the cell text.</Field>
+                <Field name="fontSize" type="number">Font size in points (e.g. 14).</Field>
+                <Field name="fontColor" type="string">Text color as hex (e.g. &quot;#ff0000&quot; for red).</Field>
+                <Field name="bgColor" type="string">Background color as hex (e.g. &quot;#f0f0f0&quot; for light gray).</Field>
+              </div>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Example</p>
+              <Code>{`curl -X POST https://opensheet-seven.vercel.app/api/v1/sheets \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Budget Calculator",
+    "sheets": [{
+      "name": "Summary",
+      "cells": {
+        "A1": { "value": "Category", "bold": true, "bgColor": "#1e1e1e", "fontColor": "#ffffff" },
+        "B1": { "value": "Budget", "bold": true, "bgColor": "#1e1e1e", "fontColor": "#ffffff" },
+        "C1": { "value": "Actual", "bold": true, "bgColor": "#1e1e1e", "fontColor": "#ffffff" },
+        "D1": { "value": "Diff", "bold": true, "bgColor": "#1e1e1e", "fontColor": "#ffffff" },
+        "A2": { "value": "Marketing" },
+        "B2": { "value": 15000 },
+        "C2": { "value": 12300 },
+        "D2": { "formula": "=B2-C2" },
+        "A3": { "value": "Engineering" },
+        "B3": { "value": 50000 },
+        "C3": { "value": 48700 },
+        "D3": { "formula": "=B3-C3" },
+        "A4": { "value": "Total", "bold": true },
+        "B4": { "formula": "=SUM(B2:B3)", "bold": true },
+        "C4": { "formula": "=SUM(C2:C3)", "bold": true },
+        "D4": { "formula": "=B4-C4", "bold": true, "fontColor": "#10b981" }
+      }
+    }]
+  }'`}</Code>
+            </section>
+
+            {/* Create Doc */}
+            <section id="create-doc" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Create a Document</h2>
+                <Badge text="POST" color="blue" />
+              </div>
+              <div className="mb-4 px-3.5 py-2 bg-zinc-50 border border-zinc-100 rounded-lg">
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/docs</code>
+              </div>
+              <p className="text-sm text-zinc-500 mb-6">Creates a rich text document with headings, paragraphs, and formatting.</p>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Content Block Properties</p>
+              <div className="border border-zinc-100 rounded-xl p-4 mb-6">
+                <Field name="type" type="string" required>&quot;heading&quot; or &quot;paragraph&quot;. Determines how the block is rendered.</Field>
+                <Field name="text" type="string" required>The text content of the block.</Field>
+                <Field name="level" type="number">Heading level from 1 (largest) to 5 (smallest). Only applies when type is &quot;heading&quot;.</Field>
+                <Field name="bold" type="boolean">Bold the entire block.</Field>
+                <Field name="italic" type="boolean">Italicize the entire block.</Field>
+                <Field name="color" type="string">Text color as hex.</Field>
+              </div>
+
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Example</p>
+              <Code>{`curl -X POST https://opensheet-seven.vercel.app/api/v1/docs \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Project Brief",
+    "content": [
+      { "type": "heading", "level": 1, "text": "Project Brief: OpenOfficeAI" },
+      { "type": "heading", "level": 2, "text": "Overview" },
+      { "type": "paragraph", "text": "OpenOfficeAI is an API-first document platform that lets developers and AI agents create spreadsheets and documents programmatically." },
+      { "type": "heading", "level": 2, "text": "Goals" },
+      { "type": "paragraph", "text": "1. Launch public beta by end of March" },
+      { "type": "paragraph", "text": "2. Reach 500 API keys in first month" },
+      { "type": "paragraph", "text": "3. Achieve $2k MRR by Q2" },
+      { "type": "heading", "level": 2, "text": "Timeline" },
+      { "type": "paragraph", "text": "Week 1: API docs + SDK. Week 2: Stripe billing. Week 3: Product Hunt launch." }
+    ]
+  }'`}</Code>
+            </section>
+
+            {/* Get */}
+            <section id="get" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Get a Document</h2>
+                <Badge text="GET" color="green" />
+              </div>
+              <div className="mb-4 px-3.5 py-2 bg-zinc-50 border border-zinc-100 rounded-lg">
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/sheets/:id</code>
+                <span className="text-zinc-300 mx-2">or</span>
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/docs/:id</code>
+              </div>
+              <p className="text-sm text-zinc-500 mb-4">Retrieve a document by ID. Returns the full data. <strong>No authentication required</strong> — anyone with the ID can read it.</p>
+              <Code>{`curl https://opensheet-seven.vercel.app/api/v1/sheets/x7k2m9p3`}</Code>
+            </section>
+
+            {/* Update */}
+            <section id="update" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Update a Document</h2>
+                <Badge text="PUT" color="amber" />
+              </div>
+              <div className="mb-4 px-3.5 py-2 bg-zinc-50 border border-zinc-100 rounded-lg">
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/sheets/:id</code>
+                <span className="text-zinc-300 mx-2">or</span>
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/docs/:id</code>
+              </div>
+              <p className="text-sm text-zinc-500 mb-4">Replace the document data. Requires authentication. The <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">data</code> field should contain the full Univer snapshot object (the same format returned by GET).</p>
+              <Code>{`curl -X PUT https://opensheet-seven.vercel.app/api/v1/sheets/x7k2m9p3 \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "data": { ... } }'`}</Code>
+            </section>
+
+            {/* Delete */}
+            <section id="delete" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Delete a Document</h2>
+                <Badge text="DELETE" color="red" />
+              </div>
+              <div className="mb-4 px-3.5 py-2 bg-zinc-50 border border-zinc-100 rounded-lg">
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/sheets/:id</code>
+                <span className="text-zinc-300 mx-2">or</span>
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/docs/:id</code>
+              </div>
+              <p className="text-sm text-zinc-500 mb-4">Permanently delete a document. Requires authentication. This cannot be undone.</p>
+              <Code>{`curl -X DELETE https://opensheet-seven.vercel.app/api/v1/sheets/x7k2m9p3 \\
+  -H "Authorization: Bearer YOUR_API_KEY"`}</Code>
+            </section>
+
+            {/* Download */}
+            <section id="download" className="scroll-mt-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold tracking-tight">Download / Export</h2>
+                <Badge text="GET" color="green" />
+              </div>
+              <div className="mb-4 px-3.5 py-2 bg-zinc-50 border border-zinc-100 rounded-lg">
+                <code className="text-sm text-zinc-700" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>/api/v1/download/:id?format=FORMAT</code>
+              </div>
+              <p className="text-sm text-zinc-500 mb-4">Export a document in various formats. No authentication required.</p>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 rounded-xl border border-zinc-100">
+                  <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-2">Spreadsheet Formats</p>
+                  <div className="space-y-1.5 text-sm text-zinc-600">
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">xlsx</code> — Excel workbook</p>
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">csv</code> — Comma-separated values</p>
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">html</code> — HTML table</p>
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">json</code> — Raw JSON snapshot</p>
                   </div>
+                </div>
+                <div className="p-4 rounded-xl border border-zinc-100">
+                  <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-2">Document Formats</p>
+                  <div className="space-y-1.5 text-sm text-zinc-600">
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">pdf</code> — PDF document</p>
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">docx</code> — Word document</p>
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">txt</code> — Plain text</p>
+                    <p><code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">json</code> — Raw JSON snapshot</p>
+                  </div>
+                </div>
+              </div>
 
-                  {'endpoint' in s && s.endpoint && (
-                    <div className="mb-4 px-3 py-2 bg-zinc-100 rounded-lg text-sm" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-                      {s.endpoint}
-                    </div>
-                  )}
+              <Code>{`# Download spreadsheet as Excel
+curl -O https://opensheet-seven.vercel.app/api/v1/download/x7k2m9p3?format=xlsx
 
-                  {'desc' in s && s.desc && <p className="text-sm text-zinc-600 mb-4 leading-relaxed">{s.desc}</p>}
-                  {'content' in s && s.content && (
-                    <div className="text-sm text-zinc-600 mb-4 leading-relaxed whitespace-pre-line">{s.content}</div>
-                  )}
+# Download document as PDF
+curl -O https://opensheet-seven.vercel.app/api/v1/download/p3n8q2w1?format=pdf`}</Code>
+            </section>
 
-                  {'requestFields' in s && s.requestFields && (
-                    <div className="mb-4 border border-zinc-200 rounded-xl overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-zinc-50 border-b border-zinc-100">
-                            <th className="text-left px-4 py-2 text-xs font-medium text-zinc-400">Field</th>
-                            <th className="text-left px-4 py-2 text-xs font-medium text-zinc-400">Type</th>
-                            <th className="text-left px-4 py-2 text-xs font-medium text-zinc-400">Required</th>
-                            <th className="text-left px-4 py-2 text-xs font-medium text-zinc-400">Description</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {s.requestFields.map(f => (
-                            <tr key={f.name} className="border-b border-zinc-50 last:border-0">
-                              <td className="px-4 py-2 font-medium" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{f.name}</td>
-                              <td className="px-4 py-2 text-zinc-500" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{f.type}</td>
-                              <td className="px-4 py-2 text-zinc-500">{f.required ? 'Yes' : 'No'}</td>
-                              <td className="px-4 py-2 text-zinc-500">{f.desc}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+            {/* Sharing */}
+            <section id="sharing" className="scroll-mt-24">
+              <h2 className="text-lg font-semibold tracking-tight mb-4">Sharing & Permissions</h2>
+              <div className="space-y-3 text-sm text-zinc-600 leading-relaxed">
+                <p><strong>Viewing:</strong> Anyone with the document URL can view it. No account needed. The URL format is <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">/s/:id</code> for sheets and <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">/d/:id</code> for docs.</p>
+                <p><strong>Editing:</strong> Requires a signed-in account. Anonymous visitors see a &quot;Sign in to edit&quot; button. Edits auto-save every 2 seconds.</p>
+                <p><strong>API access:</strong> GET requests are public. POST/PUT/DELETE require a valid API key via the Authorization header.</p>
+              </div>
+            </section>
 
-                  {'request' in s && s.request && (
-                    <div className="mb-4">
-                      <p className="text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">Request Body</p>
-                      <pre className="bg-[#1c1c1f] text-zinc-300 rounded-xl p-4 text-[13px] leading-[1.7] overflow-x-auto" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-                        {s.request}
-                      </pre>
-                    </div>
-                  )}
+            {/* Rate Limits */}
+            <section id="limits" className="scroll-mt-24">
+              <h2 className="text-lg font-semibold tracking-tight mb-4">Rate Limits</h2>
+              <p className="text-sm text-zinc-500 mb-4">API calls are counted per user per month. GET requests are free and unlimited. Usage resets on the 1st of each month.</p>
 
-                  {'response' in s && s.response && (
-                    <div className="mb-4">
-                      <p className="text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">Response</p>
-                      <pre className="bg-[#1c1c1f] text-zinc-300 rounded-xl p-4 text-[13px] leading-[1.7] overflow-x-auto" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-                        {s.response}
-                      </pre>
-                    </div>
-                  )}
+              <div className="border border-zinc-100 rounded-xl overflow-hidden mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-zinc-50 border-b border-zinc-100">
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Plan</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Price</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">API Calls / month</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Documents</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Overage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-zinc-50">
+                      <td className="px-4 py-2.5 font-medium text-zinc-900">Free</td>
+                      <td className="px-4 py-2.5 text-zinc-500">$0</td>
+                      <td className="px-4 py-2.5 text-zinc-500">500</td>
+                      <td className="px-4 py-2.5 text-zinc-500">25</td>
+                      <td className="px-4 py-2.5 text-zinc-400">Blocked</td>
+                    </tr>
+                    <tr className="border-b border-zinc-50">
+                      <td className="px-4 py-2.5 font-medium text-zinc-900">Pro</td>
+                      <td className="px-4 py-2.5 text-zinc-500">$12/mo</td>
+                      <td className="px-4 py-2.5 text-zinc-500">25,000</td>
+                      <td className="px-4 py-2.5 text-zinc-500">Unlimited</td>
+                      <td className="px-4 py-2.5 text-zinc-400">$0.002/call</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5 font-medium text-zinc-900">Scale</td>
+                      <td className="px-4 py-2.5 text-zinc-500">$49/mo</td>
+                      <td className="px-4 py-2.5 text-zinc-500">200,000</td>
+                      <td className="px-4 py-2.5 text-zinc-500">Unlimited</td>
+                      <td className="px-4 py-2.5 text-zinc-400">$0.001/call</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-sm text-zinc-500">When you hit the limit, the API returns <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">429 Too Many Requests</code>. Existing documents remain accessible.</p>
+            </section>
 
-                  {'curl' in s && s.curl && (
-                    <div>
-                      <p className="text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">Example</p>
-                      <pre className="bg-[#1c1c1f] text-zinc-300 rounded-xl p-4 text-[13px] leading-[1.7] overflow-x-auto" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-                        {s.curl}
-                      </pre>
-                    </div>
-                  )}
-                </section>
-              ))}
-            </div>
+            {/* Errors */}
+            <section id="errors" className="scroll-mt-24">
+              <h2 className="text-lg font-semibold tracking-tight mb-4">Error Responses</h2>
+              <p className="text-sm text-zinc-500 mb-4">All errors return JSON with an <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded">error</code> field.</p>
+
+              <div className="border border-zinc-100 rounded-xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-zinc-50 border-b border-zinc-100">
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Status</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Meaning</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-zinc-400 uppercase tracking-widest">Body</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-zinc-50">
+                      <td className="px-4 py-2.5"><Badge text="400" color="zinc" /></td>
+                      <td className="px-4 py-2.5 text-zinc-600">Bad request — invalid JSON or missing fields</td>
+                      <td className="px-4 py-2.5 text-zinc-400" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{`{"error": "Invalid request"}`}</td>
+                    </tr>
+                    <tr className="border-b border-zinc-50">
+                      <td className="px-4 py-2.5"><Badge text="401" color="zinc" /></td>
+                      <td className="px-4 py-2.5 text-zinc-600">Missing or invalid API key</td>
+                      <td className="px-4 py-2.5 text-zinc-400" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{`{"error": "Authentication required"}`}</td>
+                    </tr>
+                    <tr className="border-b border-zinc-50">
+                      <td className="px-4 py-2.5"><Badge text="404" color="zinc" /></td>
+                      <td className="px-4 py-2.5 text-zinc-600">Document not found</td>
+                      <td className="px-4 py-2.5 text-zinc-400" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{`{"error": "Not found"}`}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2.5"><Badge text="429" color="zinc" /></td>
+                      <td className="px-4 py-2.5 text-zinc-600">Rate limit exceeded</td>
+                      <td className="px-4 py-2.5 text-zinc-400" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>{`{"error": "API call limit reached..."}`}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
           </main>
         </div>
       </div>
