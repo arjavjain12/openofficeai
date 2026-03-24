@@ -102,7 +102,7 @@ export default function DashboardClient({ user, docs, apiKeys, usage, limits, pl
       <header className="sticky top-0 z-20 bg-[var(--bg)]/80 backdrop-blur-lg border-b border-zinc-100">
         <div className="max-w-[1200px] mx-auto flex items-center justify-between px-6 h-14">
           <div className="flex items-center gap-3">
-            <a href="/" className="flex items-center gap-2">
+            <a href="/dashboard" className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-[8px] bg-zinc-900 flex items-center justify-center">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                   <rect x="1" y="1" width="6" height="6" rx="1.5" fill="white" opacity="0.95" />
